@@ -36,7 +36,7 @@
 	'');
 
 	devCmd = (mkAlias "dev" ''
-		${buildCmd}/bin/build --watch --run ${rollupPushCmd}/bin/build_and_rollup
+		${buildCmd}/bin/build --watch --run ${rollupPushCmd}/bin/rollup_and_push
 	'');
 in
 	pkgs.mkShell {

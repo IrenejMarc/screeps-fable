@@ -1,0 +1,11 @@
+[*.rb]
+	indent_style = space
+	indent_size = 2
+
+[*.fs]
+	indent_style = space
+	indent_size = 2
+
+[*.nix]
+	indent_style = tab
+	indent_size = 2

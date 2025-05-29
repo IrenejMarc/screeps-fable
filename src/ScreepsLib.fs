@@ -1,29 +1,15 @@
 module ScreepsLib
 open Fable.Core
 
-[<Emit("module.exports[$0] = $1")>]
-let exportModule (name: string) (value: obj) = jsNative
-
-[<Global("console")>]
-let console: JS.Console = jsNative
-
-[<Global("Object")>]
-let JSObject: JS.Object = jsNative
-
-[<Global>]
-let FIND_SOURCES: float = jsNative
-
 type [<AllowNullLiteral>] Spawn =
   abstract name: string with get, set
-  abstract member spawnCreep: string array -> string -> obj -> float
 
 type [<AllowNullLiteral>] Room =
   abstract member name: string
-  abstract member find: float -> options: obj -> ResizeArray<'a>
 
 type [<AllowNullLiteral>] Creep =
   abstract name:   string    with get, set
-  abstract memory: JS.Object with get, set 
+  abstract memory: obj with get, set 
   abstract room: Room with get, set
 
 type [<AllowNullLiteral>] Memory =
@@ -44,9 +30,20 @@ type [<AllowNullLiteral>] Game =
 
   abstract getObjectById: id: string -> 'T
 
-let [<Global>] WORK:  string = jsNative
-let [<Global>] MOVE:  string = jsNative
-let [<Global>] CARRY: string = jsNative
+module GlobalConstants =
+  let [<Global>] WORK:  string = jsNative
+  let [<Global>] MOVE:  string = jsNative
+  let [<Global>] CARRY: string = jsNative
 
-let [<Global>] Memory: Memory = jsNative
-let [<Global>] Game: Game = jsNative
+  let [<Global>] RESOURCE_ENERGY: string = jsNative
+
+  let [<Global>] FIND_SOURCES: float = jsNative
+  let [<Global>] FIND_STRUCTURES: float = jsNative
+
+  let [<Global>] STRUCTURE_SPAWN: float = jsNative
+
+  type CreepActionResult = float
+  let [<Literal>][<Global>] OK: CreepActionResult = 0.0
+  let [<Literal>][<Global>] ERR_NOT_OWNER: CreepActionResult = -1.0
+  let [<Literal>][<Global>] ERR_NOT_RANGE: CreepActionResult = -2.0
+  let [<Literal>][<Global>] ERR_NOT_IN_RANGE: CreepActionResult = -9.0

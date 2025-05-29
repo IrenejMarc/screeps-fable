@@ -8,7 +8,13 @@
 
   <ItemGroup>
     <Compile Include="src/ScreepsLib.fs" />
+    <Compile Include="src/Util.fs" />
+    <Compile Include="src/Creep.fs" />
     <Compile Include="src/Screeps.fs" />
+    <Compile Include="src/Room.fs" />
+    <Compile Include="src/tasks/Miner.fs" />
+    <Compile Include="src/CreepManager.fs" />
+
     <Compile Include="main.fs" />
   </ItemGroup>
 

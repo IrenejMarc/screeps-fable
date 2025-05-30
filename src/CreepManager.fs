@@ -1,65 +1,49 @@
 module CreepManager
 open ScreepsLib.GlobalConstants
-open Fable.Core.JsInterop
 
-let CREEPS_PER_ROOM = 2
-let WANTED_CREEP_BODY = [| WORK; MOVE; CARRY |];
+let handleRunResult ((creep, result): ScreepsLib.Creep option * CreepRunResult) =
+  match (creep, result) with
+  | None, _          -> Log.info $"Creep not found"
+  | _, Working       -> Log.info "Creep working"
+  | _, Spawning      -> Log.info "Waiting for creep to spawn"
 
-let spawnMinersForSpawn game (spawn: ScreepsLib.Spawn): unit =
-  let minerCount = Util.jsObjectSize <| Game.creeps game
-  let missingMinerCount = CREEPS_PER_ROOM - minerCount
-
-  if missingMinerCount > 0 then
-    Util.repeat missingMinerCount <| fun _ ->
-      let creepName = $"C {Util.randomInt 100 900}"
-      let creepSpawnResult =
-        spawn |> Spawn.spawnCreep WANTED_CREEP_BODY creepName (createObj [ "role", "builder" ])
-
-      Log.info $"Spawning missing creep '{creepName}' for {spawn.name}- result: {creepSpawnResult}"
-
-let spawnMiners game =
-  Game.spawns game
-  |> Seq.iter (spawnMinersForSpawn game)
+  | _, NotImplemented -> Log.info "Task not implemented"
+  | _, UnhandledError message -> Log.info $"Unhandled error: {message}"
 
 
+let bodyCost parts = Seq.length parts * 100
+let spawnMiner name parts spawn =
+  let cost = bodyCost parts
+  let availableEnergy = Store.usedCapacity RESOURCE_ENERGY spawn
 
-let runBuilder (creep: ScreepsLib.Creep): CreepRunResult =
-  Log.info $"Creep {creep.name} is buldeirng"
-  Working
+  if cost <= availableEnergy then
+    let spawnResult = Spawn.spawnCreep parts name spawn
 
+    match spawnResult with
+    | OK -> Spawning
+    | e -> UnhandledError $"Miner spawn error {e}"
+  else
+    UnhandledError $"Not enough energy to spawn {name} ({availableEnergy}/{cost})"
 
-let runCreep (creep: ScreepsLib.Creep) =
-  let memory = Creep.memory creep
+let makeMinerBody() =
+  [| WORK; MOVE; CARRY |];
 
-  match memory.role with
-  | Some Builder  -> creep, runBuilder creep
-  | Some Miner    -> creep, Miner.run creep
-  | Some Upgrader -> creep, NotImplemented
-  | None          -> creep, Waiting
+let runMiner (source, name)  =
+  match Game.creep name with
+  | Some creep -> Some creep, Miner.run creep source
+  | None       -> None, spawnMiner name (makeMinerBody()) (Game.spawn "Spawn1")
 
+let MINERS_PER_SOURCE = 2
 
-let assignCreepTask creep =
-  let task = Miner
+let runMiners game =
+  let sourceMinerNames (source: ScreepsLib.Source) =
+    {1 .. MINERS_PER_SOURCE}
+    |> Seq.map (fun n -> source, $"M{n}{source.id}")
 
-  Log.info $"Assigning {task} to {creep?name}"
-
-  creep
-  |> Creep.assignTask task
-
-
-let handleRunResult ((creep, result): ScreepsLib.Creep * CreepRunResult) =
-  match result with
-  | Working -> ()
-  | Waiting -> assignCreepTask creep
-  | TaskCompleted -> () // TODO: ditto
-  | NotImplemented -> Log.info "Task not implemented" // TODO: ditto
-  | UnhandledError message -> Log.info $"Unhandled error: {message}"
-
-let runCreeps game =
-  Game.creeps game
-  |> Seq.map runCreep
-  |> Seq.iter handleRunResult
+  Game.rooms game
+  |> Seq.collect (Room.find FIND_SOURCES)
+  |> Seq.collect sourceMinerNames
+  |> Seq.iter (runMiner >> handleRunResult)
 
 let run (game: ScreepsLib.Game) =
-  spawnMiners game
-  runCreeps game
+  runMiners game

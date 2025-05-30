@@ -3,7 +3,9 @@ module Screeps
 
 open Fable.Core
 open Fable.Core.JsInterop
-open ScreepsLib.GlobalConstants
+open ScreepsLib
+
+type ID = string
 
 module Log =
   let [<Emit("console")>] console: JS.Console = jsNative
@@ -12,24 +14,30 @@ module Log =
   let error value = console.error value
   let debug value = console.debug value
 
+  let tap fn value = fn value; value
+
+
+
 module Spawn =
-  let spawnCreep body name options spawn: float =
-    spawn?spawnCreep (body, name, options)
+  let spawnCreep body name spawn: float = spawn?spawnCreep(body, name)
 
 module Game =
-  let spawns game: ScreepsLib.Spawn seq = Util.jsObjectValues game?spawns
-  let creeps game: ScreepsLib.Creep seq = Util.jsObjectValues game?creeps
+  let get id = ScreepsLib.globalGame?getObjectById(id)
+  let creep (name: string): Creep option = globalGame.creeps?(name)
+  let spawn (name: string): Spawn option = globalGame.spawns?(name)
 
-module Creep =
-  let memory creep: CreepMemory = creep?memory
-  let harvest target creep: CreepActionResult = creep?harvest(target)
-  let transfer target resource creep: CreepActionResult = creep?transfer(target, resource)
-  let freeCapacity resource creep: float = creep?store?getFreeCapacity(resource)
-
-  let assignTask (task: CreepRole) (creep: ScreepsLib.Creep) =
-    creep?memory?role <- task
-
-  let moveTo target creep: CreepActionResult = creep?moveTo(target)
+  let spawns game: Spawn seq = Util.jsObjectValues game?spawns
+  let creeps game: Creep seq = Util.jsObjectValues game?creeps
+  let rooms game: Room seq = Util.jsObjectValues game?rooms
 
 module Room =
-  let find it room = room?find(it)
+  let find<'t> it room: 't seq = room?find(it)
+
+module Store =
+  let freeCapacity resource object: int =
+    object?store?getFreeCapacity(resource)
+
+  let usedCapacity resource object: int =
+    object?store?getUsedCapacity(resource)
+
+
